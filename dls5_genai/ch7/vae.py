@@ -88,3 +88,18 @@ for epoch in range(epochs):
   loss_avg=loss_sum/cnt
   losses.append(loss_avg)
   print(loss_avg)
+
+plt.plot(losses,'ro')
+plt.show()
+
+with torch.no_grad():
+  sample_size=64
+  z=torch.randn(sample_size,latent_dim)
+  x=model.decoder(z)
+  generated_images=x.view(sample_size,1,28,28)
+
+gird_img=torchvision.utils.make_grid(generated_images,nrow=8,padding=2,normalize=True)
+
+plt.imshow(gird_img.permute(1,2,0))
+plt.axis('off')
+plt.show()
