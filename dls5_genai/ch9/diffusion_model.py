@@ -20,7 +20,7 @@ def pos_encoding(ts,output_dim,device='cpu'):
   return v
 
 class ConvBlock(nn.Module):
-  def __init__(self,in_ch,out_ch):
+  def __init__(self,in_ch,out_ch,time_embed_dim):
     super().__init__()
     self.convs=nn.Sequential(
                 nn.Conv2d(in_ch,out_ch,3,padding=1),

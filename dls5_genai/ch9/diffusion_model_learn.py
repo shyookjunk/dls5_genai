@@ -30,7 +30,7 @@ def pos_encoding(ts,output_dim,device='cpu'):
   return v
 
 class ConvBlock(nn.Module):
-  def __init__(self,in_ch,out_ch):
+  def __init__(self,in_ch,out_ch,time_embed_dim):
     super().__init__()
     self.convs=nn.Sequential(
                 nn.Conv2d(in_ch,out_ch,3,padding=1),
@@ -63,6 +63,7 @@ class UNet(nn.Module):
 
     self.maxpool=nn.MaxPool2d(2)
     self.upsample=nn.Upsample(scale_factor=2,mode='bilinear')
+    self.time_embed_dim=time_embed_dim
 
   def forward(self,x,timesteps):
     v=pos_encoding(timesteps,self.time_embed_dim,x.device)
@@ -149,7 +150,7 @@ class Diffuser():
       t=torch.tensor([i]*batch_size,device=self.device,dtype=torch.long)
       x=self.denoise(model,x,t)
 
-    images=[self.reverse_to_img(x[i]} for i in range(batch_size)]
+    images=[self.reverse_to_img(x[i]) for i in range(batch_size)]
     return images
 
 def show_images(images,rows=2,cols=10):
@@ -169,6 +170,7 @@ num_timesteps=1000
 epochs=10
 lr=1e-3
 device='cuda' if torch.cuda.is_available() else 'cpu'
+print("Device=",device)
 
 preprocess=transforms.ToTensor()
 dataset=torchvision.datasets.MNIST(root="./data",download=True,transform=preprocess)
@@ -176,6 +178,40 @@ dataloader=DataLoader(dataset,batch_size=batch_size,shuffle=True)
 
 diffuser=Diffuser(num_timesteps,device=device)
 model=UNet()
+model.to(device)
+optimizer=Adam(model.parameters(),lr=lr)
+
+losses=[]
+for epoch in range(epochs):
+  loss_sum=0.0
+  cnt=0
+
+  for images,labels in tqdm(dataloader):
+    optimizer.zero_grad()
+    x=images.to(device)
+    t=torch.randint(1,num_timesteps+1,(len(x),),device=device)
+
+    x_noisy,noise=diffuser.add_noise(x,t)
+    noise_pred=model(x_noisy,t)
+    loss=F.mse_loss(noise,noise_pred)
+
+    loss.backward()
+    optimizer.step()
+
+    loss_sum+=loss.item()
+    cnt+=1
+
+  loss_avg=loss_sum/cnt
+  losses.append(loss_avg)
+  print(f'Epoch {epoch} | Loss: {loss_avg}')
+
+plt.plot(losses)
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.show()
+
+images=diffuser.sample(model)
+show_images(images)
 
 # v=pos_encoding(torch.tensor([1,2,3]),16)
 # #v=_pos_encoding(1,16)
