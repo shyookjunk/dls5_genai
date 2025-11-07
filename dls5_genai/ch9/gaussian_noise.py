@@ -11,6 +11,19 @@ def reverse_to_img(x):
   to_pil=transforms.ToPILImage()
   return to_pil(x)
 
+def add_noise(x_0,t,betas):
+  T=len(betas)
+  assert t>=1 and t<=T
+  
+  alphas=1-betas
+  alpha_bars=torch.cumprod(alphas,dim=0)
+  t_idx=t-1
+  alpha_bar=alpha_bars[t_idx]
+
+  eps=torch.randn_like(x_0)
+  x_t=torch.sqrt(alpha_bar)*x_0+torch.sqrt(1-alpha_bar)*eps
+  return x_t
+
 # read image
 current_dir=os.path.dirname(os.path.abspath(__file__))
 file_path=os.path.join(current_dir,'flower.png')
@@ -26,25 +39,35 @@ T=1000
 beta_start=0.0001
 beta_end=0.02
 betas=torch.linspace(beta_start,beta_end,T)
-imgs=[]
 
-for t in range(T):
-  if t%100==0:
-    img=reverse_to_img(x)
-    imgs.append(img)
+t=100
+x_t=add_noise(x,t,betas)
 
-  beta=betas[t]
-  eps=torch.randn_like(x)
-  x=torch.sqrt(1-beta)*x+torch.sqrt(beta)*eps
-
-plt.figure(figsize=(15,6))
-for i,img in enumerate(imgs[:10]):
-  plt.subplot(2,5,i+1)
-  plt.imshow(img)
-  plt.title(f'Noise: {i*100}')
-  plt.axis('off')
-
+img=reverse_to_img(x_t)
+plt.imshow(img)
+plt.title(f'Noise: {t}')
+plt.axis('off')
 plt.show()
+
+#imgs=[]
+
+# for t in range(T):
+#   if t%100==0:
+#     img=reverse_to_img(x)
+#     imgs.append(img)
+
+#   beta=betas[t]
+#   eps=torch.randn_like(x)
+#   x=torch.sqrt(1-beta)*x+torch.sqrt(beta)*eps
+
+# plt.figure(figsize=(15,6))
+# for i,img in enumerate(imgs[:10]):
+#   plt.subplot(2,5,i+1)
+#   plt.imshow(img)
+#   plt.title(f'Noise: {i*100}')
+#   plt.axis('off')
+
+# plt.show()
 
 
 # x=torch.randn(3,64,64)
