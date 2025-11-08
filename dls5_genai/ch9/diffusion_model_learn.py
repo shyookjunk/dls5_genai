@@ -105,7 +105,7 @@ class Diffuser():
     noise=torch.randn_like(x_0,device=self.device)
     x_t=torch.sqrt(alpha_bar)*x_0+torch.sqrt(1-alpha_bar)*noise
 
-    return x_0,noise
+    return x_t,noise
 
   def denoise(self,model,x,t):
     T=self.num_timesteps
