@@ -129,7 +129,7 @@ class Diffuser():
     noise=torch.randn_like(x,device=self.device)
     noise[t==1]=0
 
-    mu=(x-((1-alpha)/torch.sqrt(1-alpha.bar))*eps)/torch.sqrt(alpha)
+    mu=(x-((1-alpha)/torch.sqrt(1-alpha_bar))*eps)/torch.sqrt(alpha)
     std=torch.sqrt((1-alpha)*(1-alpha_bar_prev)/(1-alpha_bar))
 
     return mu+noise*std
@@ -143,7 +143,7 @@ class Diffuser():
     return to_pil(x)
   
   def sample(self,model,x_shape=(20,1,28,28)):
-    batch_size=x_shape
+    batch_size=x_shape[0]
     x=torch.randn(x_shape,device=self.device)
 
     for i in tqdm(range(self.num_timesteps,0,-1)):
